@@ -30,6 +30,11 @@ if !exists( "g:vimroom_min_sidebar_width" )
     let g:vimroom_min_sidebar_width = 5
 endif
 
+" The location of sidebars.  0 both sides, <0 left, >0 right
+if !exists( "g:vimroom_one_sidebar" )
+    let g:vimroom_one_sidebar = 0
+endif
+
 " The sidebar height.  Defaults to 3:
 if !exists( "g:vimroom_sidebar_height" )
     let g:vimroom_sidebar_height = 3
@@ -124,6 +129,10 @@ function! s:sidebar_size()
     return ( winwidth( winnr() ) - g:vimroom_width - 2 ) / 2
 endfunction
 
+function! s:one_sidebar_size()
+    return ( winwidth( winnr() ) - g:vimroom_width - 1 )
+endfunction
+
 function! <SID>VimroomToggle()
     if s:active == 1
         let s:active = 0
@@ -171,26 +180,34 @@ function! <SID>VimroomToggle()
     else
         if s:is_the_screen_wide_enough()
             let s:active = 1
-            let s:sidebar = s:sidebar_size()
+            if g:vimroom_one_sidebar != 0
+                let s:sidebar = s:one_sidebar_size()
+            else
+                let s:sidebar = s:sidebar_size()
+            endif
             " Turn off status bar
             if s:save_laststatus != ""
                 setlocal laststatus=0
             endif
             if g:vimroom_min_sidebar_width
-                " Create the left sidebar
-                exec( "silent leftabove " . s:sidebar . "vsplit new" )
-                setlocal noma
-                setlocal nocursorline
-                setlocal nonumber
-                silent! setlocal norelativenumber
-                wincmd l
-                " Create the right sidebar
-                exec( "silent rightbelow " . s:sidebar . "vsplit new" )
-                setlocal noma
-                setlocal nocursorline
-                setlocal nonumber
-                silent! setlocal norelativenumber
-                wincmd h
+                if g:vimroom_one_sidebar <= 0
+                    " Create the left sidebar
+                    exec( "silent leftabove " . s:sidebar . "vsplit new" )
+                    setlocal noma
+                    setlocal nocursorline
+                    setlocal nonumber
+                    silent! setlocal norelativenumber
+                    wincmd l
+                endif
+                if g:vimroom_one_sidebar >= 0
+                    " Create the right sidebar
+                    exec( "silent rightbelow " . s:sidebar . "vsplit new" )
+                    setlocal noma
+                    setlocal nocursorline
+                    setlocal nonumber
+                    silent! setlocal norelativenumber
+                    wincmd h
+                endif
             endif
             if g:vimroom_sidebar_height
                 " Create the top sidebar
@@ -215,9 +232,10 @@ function! <SID>VimroomToggle()
                 set nonumber
                 silent! set norelativenumber
             endif
-            if s:save_textwidth != ""
-                exec( "set textwidth=".g:vimroom_width )
-            endif
+            " DJW: this messes with existing settings
+            "if s:save_textwidth != ""
+                "exec( "set textwidth=".g:vimroom_width )
+            "endif
             if s:save_scrolloff != ""
                 exec( "set scrolloff=".g:vimroom_scrolloff )
             endif
